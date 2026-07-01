@@ -1,0 +1,19 @@
+# Go executáveis
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+work-backend/work-backend
+
+# Node / Frontend
+node_modules/
+.pnpm-store/
+dist/
+.next/
+
+# Ambientes e Segredos
+.env
+.env.*
+!.env.example
+nginx
