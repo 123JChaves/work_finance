@@ -18,13 +18,13 @@ func NovoAdministradorConector(uc *caso_de_uso.Administrador_casoDeUso) *Adminis
 func (conector *AdministradorConector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// Tolerância para barras extras na rota (ex: /administradores/)
+	// Tolerância para barras extras na rota (ex: /administradores/):
 	if r.URL.Path != "/administradores" && r.URL.Path != "/administradores/" {
 		http.NotFound(w, r)
 		return
 	}
 
-	// Direciona a requisição baseada no método HTTP
+	// Direciona a requisição baseada no método HTTP:
 	switch r.Method {
 	case http.MethodGet:
 		conector.tratarListagem(w, r)
@@ -61,7 +61,7 @@ func (conector *AdministradorConector) tratarListagem(w http.ResponseWriter, r *
 		return
 	}
 
-	// Mascara as senhas de todos os administradores listados por segurança
+	// Mascara as senhas de todos os administradores listados por segurança:
 	for _, admin := range administradores {
 		admin.Senha = "[PROTEGIDO]"
 	}

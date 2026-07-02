@@ -35,7 +35,7 @@ func (uc *Administrador_casoDeUso) Cadastrar(administrador *entidade.Administrad
 
 	senhaCriptografada, erro := uc.hasher.Hash(administrador.Senha)
 	if erro != nil {
-		return errors.New("Erro ao processar a segurança da senha") // Corrigido: errors com um 'r'
+		return errors.New("Erro ao processar a segurança da senha")
 	}
 	administrador.Senha = senhaCriptografada
 
@@ -46,7 +46,6 @@ func (uc *Administrador_casoDeUso) Cadastrar(administrador *entidade.Administrad
 }
 
 func (uc *Administrador_casoDeUso) Listar() ([]*entidade.Administrador, error) {
-	// Acessa o repositório e retorna a lista de administradores
 	return uc.repositorio.FindAll()
 }
 
