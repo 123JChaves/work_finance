@@ -45,3 +45,8 @@ func (uc *Administrador_casoDeUso) Cadastrar(administrador *entidade.Administrad
 	return uc.repositorio.Create(administrador)
 }
 
+func (uc *Administrador_casoDeUso) Listar() ([]*entidade.Administrador, error) {
+	// Acessa o repositório e retorna a lista de administradores
+	return uc.repositorio.FindAll()
+}
+

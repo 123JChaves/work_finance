@@ -40,6 +40,21 @@ func (repositorio *MemoriaAdministradorRepositorio) FindByID(id int) (*entidade.
 	return &administrador, nil
 }
 
+func (repositorio *MemoriaAdministradorRepositorio) FindAll() ([]*entidade.Administrador, error) {
+	repositorio.RLock()
+	defer repositorio.RUnlock()
+
+	lista := make([]*entidade.Administrador, 0, len(repositorio.administradores))
+	for _, admin := range repositorio.administradores {
+		// Criamos uma cópia para evitar ponteiros compartilhados indevidamente
+		copia := admin
+		lista = append(lista, &copia)
+	}
+
+	return lista, nil
+}
+
+
 func (repositorio *MemoriaAdministradorRepositorio) FindByEmail(email string) (*entidade.Administrador, error) {
 	repositorio.RLock()
 	defer repositorio.RUnlock()

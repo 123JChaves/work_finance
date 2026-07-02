@@ -15,7 +15,13 @@ type Administrador struct {
 type AdministradorRepositorio interface {
 	Create(admin *Administrador) error
 	FindByID(id int) (*Administrador, error)
+	FindAll() ([]*Administrador, error)
 	FindByEmail(email string) (*Administrador, error)
 	Update(admin *Administrador) error
 	Delete(id int) error
+}
+
+type PasswordHasher interface {
+	Hash(password string) (string, error)
+	Compare(hash, password string) bool
 }
