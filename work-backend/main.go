@@ -23,12 +23,10 @@ func main() {
 	conectorAdmin := conectores.NovoAdministradorConector(casoUso)
 
 	// 5. Define a rota da API que o React/React-Native vão chamar:
-	// Use este caminho exato ao testar no navegador ou aplicativo
 	http.Handle("/administradores", conectorAdmin)
 
 	// 6. Instancia o servidor local:
 	fmt.Println("Servidor Go rodando em http://localhost:8080")
-	// Mudado de Println para Printf para exibir a variável 'erro' corretamente se algo falhar
 	if erro := http.ListenAndServe(":8080", nil); erro != nil {
 		fmt.Printf("Erro ao iniciar o servidor: %v\n", erro)
 	}
