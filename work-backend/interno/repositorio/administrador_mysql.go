@@ -15,19 +15,23 @@ func NovoGORMAdministradorRepositorio(db *gorm.DB) *GORMAdministradorRepositorio
 }
 
 func (r *GORMAdministradorRepositorio) Create(admin *entidade.Administrador) error {
-	// O GORM faz o INSERT e já preenche o admin.ID automaticamente
 	return r.db.Create(admin).Error
 }
 
 func (r *GORMAdministradorRepositorio) FindByID(id int) (*entidade.Administrador, error) {
 	var admin entidade.Administrador
-	err := r.db.First(&admin, id).Error
+	
+	// .Find não dispara o log "record not found" se o ID não existir
+	err := r.db.Limit(1).Find(&admin, id).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("Administrador não encontrado")
-		}
 		return nil, err
 	}
+	
+	// Como o ID no banco começa em 1, se voltar 0 significa que não encontrou nada
+	if admin.ID == 0 {
+		return nil, errors.New("Administrador não encontrado")
+	}
+	
 	return &admin, nil
 }
 
@@ -38,26 +42,33 @@ func (r *GORMAdministradorRepositorio) FindAll() ([]*entidade.Administrador, err
 }
 
 func (r *GORMAdministradorRepositorio) FindByEmail(email string) (*entidade.Administrador, error) {
-	var admin entidade.Administrador
-	err := r.db.Where("email = ?", email).First(&admin).Error
+	var admins []entidade.Administrador
+	
+	// .Find preenche o slice e não gera erros ou logs caso não encontre registros
+	err := r.db.Where("email = ?", email).Limit(1).Find(&admins).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
 		return nil, err
 	}
-	return &admin, nil
+	
+	// Se o slice veio vazio, o e-mail não existe no banco. Retorna nil, nil
+	if len(admins) == 0 {
+		return nil, nil
+	}
+	
+	// Retorna o ponteiro do único elemento encontrado
+	return &admins[0], nil
 }
 
 func (r *GORMAdministradorRepositorio) Update(admin *entidade.Administrador) error {
-	// Atualiza todos os campos do modelo com base no ID
 	resultado := r.db.Save(admin)
 	if resultado.Error != nil {
 		return resultado.Error
 	}
+	
 	if resultado.RowsAffected == 0 {
 		return errors.New("Administrador não encontrado para atualização")
 	}
+	
 	return nil
 }
 
@@ -66,8 +77,10 @@ func (r *GORMAdministradorRepositorio) Delete(id int) error {
 	if resultado.Error != nil {
 		return resultado.Error
 	}
+	
 	if resultado.RowsAffected == 0 {
 		return errors.New("Administrador não encontrado para exclusão")
 	}
+	
 	return nil
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,10 +8,12 @@ import (
 	"os"
 	"work-backend/interno/caso_de_uso"
 	"work-backend/interno/conectores"
+	"work-backend/interno/entidade"
 	"work-backend/interno/repositorio"
 	"work-backend/interno/seguranca"
-	_"github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -29,26 +30,26 @@ func main() {
 		os.Getenv("DB_NOME"),
 	)
 
-	bancoDeDados, erro := sql.Open("mysql", dsn)
+	// Alterado: Substituído o sql.Open pelo gorm.Open
+	bancoDeDados, erro := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if erro != nil {
-		log.Fatalf("Erro ao configurar o cliente MySQL: %v", erro)
+		log.Fatalf("Erro ao conectar ao MySQL via GORM: %v", erro)
 	}
-	defer bancoDeDados.Close()
 
-	if erro := bancoDeDados.Ping(); erro != nil {
-		log.Fatalf("Não foi possível conectar ao MySQL: %v", erro)
+	// Executa o AutoMigrate para criar/atualizar a tabela 'administradores' no MySQL
+	erro = bancoDeDados.AutoMigrate(&entidade.Administrador{})
+	if erro != nil {
+		log.Fatalf("Erro ao executar migration do banco: %v", erro)
 	}
-	fmt.Println("Conexão com o MySQL realizada com sucesso!")
+	fmt.Println("Conexão com o MySQL realizada com sucesso via GORM!")
 
 	//==== Instâncias:
 
 	// 1. Instancia o mecanismo de segurança (Bcrypt):
 	hasher := seguranca.NovoBcryptHasher()
 
-	// 2. Instancia o repositório em memória:
-	// Opcional: Quando tiver o repositório do banco pronto, substitua por:
-	// repo := repositorio.NovoMySQLAdministradorRepositorio(bancoDeDados)
-	repo := repositorio.NovoMemoriaAdministradorRepositorio()
+	// 2. Alterado: Agora instancia o repositório GORM injetando o banco de dados
+	repo := repositorio.NovoGORMAdministradorRepositorio(bancoDeDados)
 
 	// 3. Instancia o caso de uso injetando o repositório e o componente de segurança:
 	casoUso := caso_de_uso.NovoAdministradorCasoDeUso(repo, hasher)
@@ -79,9 +80,14 @@ func main() {
 	// 6. Define a rota da API que o React/React-Native vão chamar:
 	http.Handle("/administradores", conectorAdmin)
 
-	// 7. Instancia o servidor local:
-	fmt.Println("Servidor Go rodando em http://localhost:8080")
-	if erro := http.ListenAndServe(":8080", nil); erro != nil {
+	// 7. Instancia o servidor local obtendo a porta do arquivo .env
+	porta := os.Getenv("PORT")
+
+	// Formata a porta adicionando os dois pontos (":") exigidos pelo ListenAndServe
+	enderecoServidor := fmt.Sprintf(":%s", porta)
+
+	fmt.Printf("Servidor Go rodando em http://localhost:%s\n", porta)
+	if erro := http.ListenAndServe(enderecoServidor, nil); erro != nil {
 		fmt.Printf("Erro ao iniciar o servidor: %v\n", erro)
 	}
 }
