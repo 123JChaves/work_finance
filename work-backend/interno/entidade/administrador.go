@@ -3,10 +3,10 @@ package entidade
 import "time"
 
 type Administrador struct {
-	ID          int       `json:"id"`
-	Nome        string    `json:"nome"`
-	Email       string    `json:"email"`
-	Senha       string    `json:"senha"`
+	ID          int       `json:"id" gorm:"primaryKey"`
+	Nome        string    `json:"nome" gorm:"type:varchar(255)"`
+	Email       string    `json:"email" gorm:"type:varchar(255);unique;not null"`
+	Senha       string    `json:"senha" gorm:"type:varchar(255);not null"`
 	DataCriacao time.Time `json:"dataCriacao"`
 	DataEdicao  time.Time `json:"dataEdicao"`
 }

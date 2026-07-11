@@ -6,6 +6,10 @@ import (
 	"gorm.io/gorm"
 )
 
+// GURANÇA DE COMPILAÇÃO: Esta linha garante em tempo de compilação que o seu repositório 
+// implementa 100% da interface definida na camada de domínio. Se faltar algum método, o Go avisa aqui.
+var _ entidade.AdministradorRepositorio = (*GORMAdministradorRepositorio)(nil)
+
 type GORMAdministradorRepositorio struct {
 	db *gorm.DB
 }
@@ -60,6 +64,7 @@ func (r *GORMAdministradorRepositorio) FindByEmail(email string) (*entidade.Admi
 }
 
 func (r *GORMAdministradorRepositorio) Update(admin *entidade.Administrador) error {
+	// O método .Save do GORM atualiza todos os campos do modelo com base na chave primária (ID)
 	resultado := r.db.Save(admin)
 	if resultado.Error != nil {
 		return resultado.Error

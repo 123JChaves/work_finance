@@ -3,6 +3,8 @@ package conectores
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"strings"
 	"work-backend/interno/caso_de_uso"
 	"work-backend/interno/entidade"
 )
@@ -15,57 +17,83 @@ func NovoAdministradorConector(uc *caso_de_uso.Administrador_casoDeUso) *Adminis
 	return &AdministradorConector{casoDeUso: uc}
 }
 
+type EditarAdministradorDTO struct {
+	Nome      string `json:"nome"`
+	Email     string `json:"email"`
+	NovaSenha string `json:"novaSenha"`
+}
+
 func (conector *AdministradorConector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	partes := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 
-	// Tolerância para barras extras na rota (ex: /administradores/):
-	if r.URL.Path != "/administradores" && r.URL.Path != "/administradores/" {
+	if len(partes) == 0 || partes[0] != "administradores" {
 		http.NotFound(w, r)
 		return
 	}
 
-	// Direciona a requisição baseada no método HTTP:
 	switch r.Method {
 	case http.MethodGet:
-		conector.tratarListagem(w, r)
+		if len(partes) == 1 { conector.tratarListagem(w, r) } else { conector.tratarBuscaPorID(w, r, partes[1]) }
 	case http.MethodPost:
 		conector.tratarCadastro(w, r)
+	case http.MethodPut:
+		conector.tratarEdicao(w, r, partes[1])
+	case http.MethodDelete:
+		conector.tratarExclusao(w, r, partes[1])
 	default:
 		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
 	}
 }
 
 func (conector *AdministradorConector) tratarCadastro(w http.ResponseWriter, r *http.Request) {
-	var administrador entidade.Administrador
-
-	if erro := json.NewDecoder(r.Body).Decode(&administrador); erro != nil {
-		http.Error(w, "JSON enviado inválido!", http.StatusBadRequest)
+	var admin entidade.Administrador
+	if json.NewDecoder(r.Body).Decode(&admin) != nil {
+		http.Error(w, "JSON inválido!", http.StatusBadRequest)
 		return
 	}
-
-	if erro := conector.casoDeUso.Cadastrar(&administrador); erro != nil {
-		http.Error(w, erro.Error(), http.StatusUnprocessableEntity)
+	if err := conector.casoDeUso.Cadastrar(&admin); err != nil {
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
-
-	administrador.Senha = "[PROTEGIDO]"
-
+	admin.Senha = "[PROTEGIDO]"
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(administrador)
+	json.NewEncoder(w).Encode(admin)
 }
 
 func (conector *AdministradorConector) tratarListagem(w http.ResponseWriter, r *http.Request) {
-	administradores, erro := conector.casoDeUso.Listar()
-	if erro != nil {
-		http.Error(w, "Erro ao buscar administradores", http.StatusInternalServerError)
+	lista, _ := conector.casoDeUso.Listar()
+	for _, a := range lista { a.Senha = "[PROTEGIDO]" }
+	json.NewEncoder(w).Encode(lista)
+}
+
+func (conector *AdministradorConector) tratarBuscaPorID(w http.ResponseWriter, r *http.Request, idStr string) {
+	id, _ := strconv.Atoi(idStr)
+	admin, err := conector.casoDeUso.Buscar(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
+	admin.Senha = "[PROTEGIDO]"
+	json.NewEncoder(w).Encode(admin)
+}
 
-	// Mascara as senhas de todos os administradores listados por segurança:
-	for _, admin := range administradores {
-		admin.Senha = "[PROTEGIDO]"
+func (conector *AdministradorConector) tratarEdicao(w http.ResponseWriter, r *http.Request, idStr string) {
+	id, _ := strconv.Atoi(idStr)
+	var dto EditarAdministradorDTO
+	json.NewDecoder(r.Body).Decode(&dto)
+	if err := conector.casoDeUso.Atualizar(id, dto.Nome, dto.Email, dto.NovaSenha); err != nil {
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		return
 	}
+	json.NewEncoder(w).Encode(map[string]string{"message": "Sucesso!"})
+}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(administradores)
+func (conector *AdministradorConector) tratarExclusao(w http.ResponseWriter, r *http.Request, idStr string) {
+	id, _ := strconv.Atoi(idStr)
+	if err := conector.casoDeUso.Deletar(id); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
