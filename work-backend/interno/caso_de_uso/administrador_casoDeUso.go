@@ -20,26 +20,26 @@ func NovoAdministradorCasoDeUso(repo entidade.AdministradorRepositorio, hasher e
 func (uc *Administrador_casoDeUso) Cadastrar(admin *entidade.Administrador) error {
 	nomeLimpo := strings.TrimSpace(admin.Nome)
 	if nomeLimpo == "" || !validador.NomeSeguro(nomeLimpo) {
-		return errors.New("o nome é obrigatório e não pode conter caracteres especiais")
+		return errors.New("O nome é obrigatório e não pode conter caracteres especiais")
 	}
 	admin.Nome = nomeLimpo
 
 	if admin.Email == "" || !validador.EmailValido(admin.Email) { // CORRIGIDO: de EmailValid para EmailValido
-		return errors.New("formato de e-mail inválido")
+		return errors.New("Formato de e-mail inválido")
 	}
 
 	if len(admin.Senha) < 6 {
-		return errors.New("a senha deve ter no mínimo 6 caracteres")
+		return errors.New("A senha deve ter no mínimo 6 caracteres")
 	}
 
 	existente, _ := uc.repositorio.FindByEmail(admin.Email)
 	if existente != nil {
-		return errors.New("este email já está cadastrado no sistema")
+		return errors.New("Este email já está cadastrado no sistema")
 	}
 
 	senhaCriptografada, err := uc.hasher.Hash(admin.Senha)
 	if err != nil {
-		return errors.New("erro ao processar a segurança da senha")
+		return errors.New("Erro ao processar a segurança da senha")
 	}
 	admin.Senha = senhaCriptografada
 	admin.DataCriacao = time.Now()
@@ -54,7 +54,7 @@ func (uc *Administrador_casoDeUso) Listar() ([]*entidade.Administrador, error) {
 
 func (uc *Administrador_casoDeUso) Buscar(id int) (*entidade.Administrador, error) {
 	if id <= 0 {
-		return nil, errors.New("o ID do administrador deve ser um número válido")
+		return nil, errors.New("O ID do administrador deve ser um número válido")
 	}
 	return uc.repositorio.FindByID(id)
 }
@@ -67,29 +67,29 @@ func (uc *Administrador_casoDeUso) Atualizar(id int, nome, email, novaSenha stri
 
 	if nome != "" {
 		if !validador.NomeSeguro(nome) {
-			return errors.New("o nome possui caracteres inválidos")
+			return errors.New("O nome possui caracteres inválidos")
 		}
 		admin.Nome = nome
 	}
 
 	if email != "" && email != admin.Email {
 		if !validador.EmailValido(email) {
-			return errors.New("formato de e-mail inválido")
+			return errors.New("Formato de e-mail inválido")
 		}
 		existente, _ := uc.repositorio.FindByEmail(email)
 		if existente != nil {
-			return errors.New("este email já está cadastrado em outra conta")
+			return errors.New("Este email já está cadastrado em outra conta")
 		}
 		admin.Email = email
 	}
 
 	if novaSenha != "" {
 		if len(novaSenha) < 6 {
-			return errors.New("a nova senha deve ter no mínimo 6 caracteres")
+			return errors.New("A nova senha deve ter no mínimo 6 caracteres")
 		}
 		senhaHash, err := uc.hasher.Hash(novaSenha)
 		if err != nil {
-			return errors.New("erro ao processar segurança da nova senha")
+			return errors.New("Erro ao processar segurança da nova senha")
 		}
 		admin.Senha = senhaHash
 	}

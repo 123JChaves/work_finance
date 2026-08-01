@@ -23,7 +23,7 @@ func (uc *CategoriaCasoDeUso) Cadastrar(cat *entidade.Categoria) error {
 	// 2. Proteção de integridade contra duplicidade de nomes
 	existente, _ := uc.repositorio.FindByNome(cat.Nome)
 	if existente != nil {
-		return errors.New("já existe uma categoria cadastrada com este nome")
+		return errors.New("Já existe uma categoria cadastrada com este nome")
 	}
 
 	return uc.repositorio.Create(cat)
@@ -35,7 +35,7 @@ func (uc *CategoriaCasoDeUso) Listar() ([]*entidade.Categoria, error) {
 
 func (uc *CategoriaCasoDeUso) Buscar(id int) (*entidade.Categoria, error) {
 	if id <= 0 {
-		return nil, errors.New("o ID da categoria deve ser um número válido")
+		return nil, errors.New("O ID da categoria deve ser um número válido")
 	}
 	return uc.repositorio.FindByID(id)
 }
@@ -56,7 +56,7 @@ func (uc *CategoriaCasoDeUso) Atualizar(id int, novoNome string) error {
 	// Impede que altere o nome para o de outra categoria existente no banco
 	existente, _ := uc.repositorio.FindByNome(cat.Nome)
 	if existente != nil && existente.ID != cat.ID {
-		return errors.New("já existe outra categoria com este nome")
+		return errors.New("Já existe outra categoria com este nome")
 	}
 
 	return uc.repositorio.Update(cat)
